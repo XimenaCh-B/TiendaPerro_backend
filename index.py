@@ -45,6 +45,17 @@ class User(dbperro.Model):
     orders = dbperro.Column(dbperro.String(100), nullable=False)
     email = dbperro.Column(dbperro.String(100), nullable=False)
 
+@dataclass
+class Order(dbperro.Model):
+    tablename = 'Order'
+    
+    ID = dbperro.Column(dbperro.Integer, unique=True, nullable=False, primary_key=True)
+    USERDNI = dbperro.Column(dbperro.Integer, ForeignKey("Usuario.DNI"), nullable=False)
+    PRODUCTID=dbperro.Column(dbperro.Integer, nullable=False)
+    TOTAL=dbperro.Column(dbperro.Integer, nullable=False)
+    
+    usuario = dbperro.relationship("Usuario")
+
 with app.app_context():
     dbperro.create_all()
     
@@ -60,19 +71,33 @@ def route_product():
         dbperro.session.commit()
         return jsonify(product)
     
-@app.route('/<product_id>', methods=['DELETE'])
+@app.route('/product/<product_id>', methods=['DELETE', 'GET'])
 def route_get_player(product_id):
     if request.method == 'DELETE':
         product = Product.query.get_or_404(product_id)
         dbperro.session.delete(product)
         dbperro.session.commit()
         return 'SUCCESS'
+    elif request.method == 'GET':
+        product = Product.query.filter_by(id=product_id).all()
+        return jsonify(product)
 
 @app.route('/user', methods=['GET','POST'])
 def route_user():
     if request.method == 'GET':
-        user = User.query.all()
-        return jsonify(user)
+        users = User.query.all()
+        list_user=[]
+        for user in users:
+            list_user.append({
+                    "password": user.password,
+                    "name": user.name,
+                    "dni": user.dni,
+                    "lastname": user.lastname,
+                    "address": user.address,
+                    "orders": user.orders,
+                    "email": user.email,
+                    })
+        return list_user 
     elif request.method == 'POST':
         data = request.get_json()
         user = User(password=data["password"], name=data["name"], address=data["address"], email=data("email"),dni=data("dni"),lastname=data("lastname"),orders=data("orders"))
@@ -80,5 +105,39 @@ def route_user():
         dbperro.session.commit()
         return jsonify(user)
 
+@app.route('/user/<user_dni>', methods=['GET'])
+def route_get_user(user_dni):
+    if request.method == 'GET':
+        user = User.query.filter_by(dni=user_dni).first()
+        return {
+                "password": user.password,
+                "name": user.name,
+                "dni": user.dni,
+                "lastname": user.lastname,
+                "address": user.address,
+                "orders": user.orders,
+                "email": user.email,
+                }
+    elif request.method == 'DELETE':
+        user = User.query.get_or_404(user_dni)
+        dbperro.session.delete(user)
+        dbperro.session.commit()
+        return 'SUCCESS'
+@app.route('/product/<category>', methods=['GET'])
+def route_get_category(product_category):
+    if request.method == 'GET':
+        product = Product.query.filter_by(category=product_category).all()
+        
+        for i in product:
+            return {
+                "id": i.id,
+                "name": i.name,
+                "category": i.category,
+                "description": i.description,
+                "stock": i.stock,
+                "price": i.price,
+                "image": i.image,
+                }
+        
 if __name__ == '__main__':
     app.run(debug=True)

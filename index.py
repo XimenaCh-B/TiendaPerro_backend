@@ -14,7 +14,7 @@ dbperro = SQLAlchemy(app)
 
 @dataclass
 class Product(dbperro.Model):
-    tablename = 'producto'
+    tablename = 'product'
     id: int
     name: str
     category: str
@@ -27,8 +27,8 @@ class Product(dbperro.Model):
     name = dbperro.Column(dbperro.String(255), nullable=False)
     category = dbperro.Column(dbperro.String(255), nullable=False)
     description = dbperro.Column(dbperro.String(255), nullable=False)
-    stock = dbperro.Column(dbperro.String(255), nullable=False)
-    price = dbperro.Column(dbperro.String(255), nullable=False)
+    stock = dbperro.Column(dbperro.Integer, nullable=False)
+    price = dbperro.Column(dbperro.Float, nullable=False)
     image = dbperro.Column(dbperro.String(255), nullable=False)
 
     def __repr__(self):
@@ -36,7 +36,7 @@ class Product(dbperro.Model):
 
 @dataclass
 class User(dbperro.Model):
-    _tablename_ = 'usuario'
+    _tablename_ = 'user'
     password = dbperro.Column(dbperro.String(10), nullable=False)
     name = dbperro.Column(dbperro.String(100), nullable=False)
     dni = dbperro.Column(dbperro.String(8), nullable=False, unique=True, primary_key=True)
@@ -48,7 +48,7 @@ class User(dbperro.Model):
 with app.app_context():
     dbperro.create_all()
     
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/product', methods=['GET', 'POST'])
 def route_product():
     if request.method == 'GET':
         product = Product.query.all()

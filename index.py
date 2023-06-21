@@ -45,7 +45,7 @@ class User(dbperro.Model):
     address = dbperro.Column(dbperro.String(100), nullable=False)
     orders = dbperro.Column(dbperro.ARRAY(Integer), nullable=False)
     email = dbperro.Column(dbperro.String(50), nullable=False)
-
+@dataclass
 class Order(dbperro.Model):
     tablename = 'order'
     ID = dbperro.Column(dbperro.Integer, unique=True, nullable=False, primary_key=True)
@@ -139,7 +139,7 @@ def route_get_category(product_category):
                 "image": i.image,
                 }
 @app.route('/orders/<order_ID>', methods=['GET'])
-def route_get_category(order_ID): 
+def route_get_order(order_ID): 
     if request.method == 'GET':
         order = Order.query.filter_by(ID=order_ID).first()
         return jsonify(order)

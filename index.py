@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from flask import Flask, jsonify, request, render_template, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Integer, ARRAY
+from app import db
 
 app = Flask(__name__)
 
@@ -42,24 +43,22 @@ class User(dbperro.Model):
     dni = dbperro.Column(dbperro.String(8), nullable=False, unique=True, primary_key=True)
     lastname = dbperro.Column(dbperro.String(50), nullable=False)
     address = dbperro.Column(dbperro.String(100), nullable=False)
-    orders = dbperro.Column(dbperro.String(100), nullable=False)
-    email = dbperro.Column(dbperro.String(100), nullable=False)
+    orders = dbperro.Column(dbperro.ARRAY(Integer), nullable=False)
+    email = dbperro.Column(dbperro.String(50), nullable=False)
 
-@dataclass
 class Order(dbperro.Model):
-    tablename = 'Order'
-    
+    tablename = 'order'
     ID = dbperro.Column(dbperro.Integer, unique=True, nullable=False, primary_key=True)
-    USERDNI = dbperro.Column(dbperro.Integer, ForeignKey("Usuario.DNI"), nullable=False)
-    PRODUCTID=dbperro.Column(dbperro.Integer, nullable=False)
+    USERDNI = dbperro.Column(dbperro.Integer, ForeignKey("user.dni"), nullable=False)
+    PRODUCTSID=dbperro.Column(dbperro.ARRAY(Integer), nullable=False)
     TOTAL=dbperro.Column(dbperro.Integer, nullable=False)
-    
-    usuario = dbperro.relationship("Usuario")
+    DATE = dbperro.Column(dbperro.DateTime, nullable=False)
+    usuario = dbperro.relationship("User")
 
 with app.app_context():
     dbperro.create_all()
     
-@app.route('/product', methods=['GET', 'POST'])
+@app.route('/products', methods=['GET', 'POST'])
 def route_product():
     if request.method == 'GET':
         product = Product.query.all()
@@ -71,7 +70,7 @@ def route_product():
         dbperro.session.commit()
         return jsonify(product)
     
-@app.route('/product/<product_id>', methods=['DELETE', 'GET'])
+@app.route('/products/<product_id>', methods=['DELETE', 'GET'])
 def route_get_player(product_id):
     if request.method == 'DELETE':
         product = Product.query.get_or_404(product_id)
@@ -82,7 +81,7 @@ def route_get_player(product_id):
         product = Product.query.filter_by(id=product_id).all()
         return jsonify(product)
 
-@app.route('/user', methods=['GET','POST'])
+@app.route('/users', methods=['GET','POST'])
 def route_user():
     if request.method == 'GET':
         users = User.query.all()
@@ -105,7 +104,7 @@ def route_user():
         dbperro.session.commit()
         return jsonify(user)
 
-@app.route('/user/<user_dni>', methods=['GET'])
+@app.route('/users/<user_dni>', methods=['GET'])
 def route_get_user(user_dni):
     if request.method == 'GET':
         user = User.query.filter_by(dni=user_dni).first()
@@ -123,7 +122,8 @@ def route_get_user(user_dni):
         dbperro.session.delete(user)
         dbperro.session.commit()
         return 'SUCCESS'
-@app.route('/product/<category>', methods=['GET'])
+    
+@app.route('/products/<category>', methods=['GET'])
 def route_get_category(product_category):
     if request.method == 'GET':
         product = Product.query.filter_by(category=product_category).all()
@@ -138,6 +138,11 @@ def route_get_category(product_category):
                 "price": i.price,
                 "image": i.image,
                 }
-        
+@app.route('/orders/<order_ID>', methods=['GET'])
+def route_get_category(order_ID): 
+    if request.method == 'GET':
+        order = Order.query.filter_by(ID=order_ID).first()
+        return jsonify(order)
+               
 if __name__ == '__main__':
     app.run(debug=True)

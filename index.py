@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from flask import Flask, jsonify, request, render_template, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey, Integer, ARRAY
-from app import db
+
 
 app = Flask(__name__)
 

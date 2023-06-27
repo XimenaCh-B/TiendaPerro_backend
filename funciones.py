@@ -6,7 +6,7 @@ from app import app,db
 import requests
 
 # -------------------------- USER REFERENCE ----------------------------
-def signin():
+def signIn():
     if request.method == 'POST':
         email = request.json['email']
         password = request.json['password']
@@ -15,10 +15,10 @@ def signin():
 
         if check_password_hash(user.password, password) and user:
             print("Login successful")
-            return jsonify(email=email, password=password)
+            return 'SUCCESS'
         return None
 
-def signup():
+def signUp():
     if request.method=='POST':
         name = request.json["name"]
         lastname = request.json["lastname"]
@@ -28,6 +28,7 @@ def signup():
         dni = request.json["dni"]
         address = request.json["address"]
         orders = request.json["orders"]
+        
         if not lastname or not username or not email or not password:
             flash('Invalid')
 

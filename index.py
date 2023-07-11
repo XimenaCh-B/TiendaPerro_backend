@@ -47,6 +47,7 @@ class User(dbperro.Model):
     password: str
     name: str
     lastname: str
+    username: str
     address: str
     orders: str
     email: str
@@ -55,6 +56,7 @@ class User(dbperro.Model):
     name = dbperro.Column(dbperro.String(100), nullable=False)
     dni = dbperro.Column(dbperro.String(8), nullable=False, unique=True, primary_key=True)
     lastname = dbperro.Column(dbperro.String(50), nullable=False)
+    username = dbperro.Column(dbperro.String(50), nullable=False)
     address = dbperro.Column(dbperro.String(100), nullable=False)
     orders = dbperro.Column(dbperro.String, nullable=False)
     email = dbperro.Column(dbperro.String(50), nullable=False)
@@ -145,13 +147,14 @@ def route_get_category(product_category):
         products = Product.query.filter_by(category=product_category).all()
         return jsonify(products)
     
-@app.route('/orders/<order_ID>', methods=['GET'])
-def route_get_order(order_ID): 
+@app.route('/orders/<userID>/<order_ID>', methods=['GET'])
+def route_get_order(userID, order_ID): 
     if request.method == 'GET':        
+        order_query = Order.query.filter_by(userID=userID)
         if order_ID == 'last':
-            order = Order.query.order_by(Order.id.desc()).first()
+            order = order_query.order_by(Order.id.desc()).first()
         else:
-            order = Order.query.filter_by(id=order_ID).first()
+            order = order_query.filter_by(id=order_ID).first()
 
         products = []
         productsID = order.products.split(',')
@@ -173,10 +176,14 @@ def route_orders():
         data = request.get_json()
         order = Order(userID=data['userID'],products=data['products'],totalPrice=data['totalPrice'],date=data['date'])
 
-        user = User.query.get_or_404(data['userID']).first()
-        user.orders += f',{order.id}'
-
         dbperro.session.add(order)
+        dbperro.session.commit()
+
+        user = User.query.filter_by(dni=data['userID']).first()
+        print(order.id)
+        user.orders += f'{order.id},'
+
+        dbperro.session.add(user)
         dbperro.session.commit()
         return 'SUCCESS'
     
@@ -189,9 +196,9 @@ def signIn():
         
         user = User.query.filter_by(email=email).first()
 
-        if check_password_hash(user.password, password) and user:
-            return 'SUCCESS'
-        return 'Ocurrió un error'
+        if user and check_password_hash(user.password, password):
+            return {'status': 'SUCCESS', 'content': user.dni}
+        return {'status': 'ERROR', 'content': 'El usuario no está registrado'}
 
 
 @app.route('/sign-up', methods=['POST'])
@@ -210,15 +217,19 @@ def signUp():
         if not lastname or not username or not email or not password:
             return 'Invalid'
 
-        user = User.query.filter_by(email=email).first()
-        if user:
-            return 'Existing email'
+        userEmail = User.query.filter_by(email=email).first()
+        userId = User.query.filter_by(dni=dni).first()
+        
+        if userEmail or userId:
+            return 'El usuario ya existe.'
+        
 
         hashpassword = generate_password_hash(password)
         newUser = User(dni=dni,orders=orders,address=address,name=name, lastname=lastname,username=username, email=email, password=hashpassword)
         dbperro.session.add(newUser)
+        dbperro.session.commit()
 
         return 'SUCCESS'
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5001)

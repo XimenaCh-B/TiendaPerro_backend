@@ -150,7 +150,7 @@ def route_get_category(product_category):
 @app.route('/orders/<userID>/<order_ID>', methods=['GET'])
 def route_get_order(userID, order_ID): 
     if request.method == 'GET':  
-        
+
         if userID == 'admin':
             order_query = Order.query
         else:
@@ -167,6 +167,7 @@ def route_get_order(userID, order_ID):
         for productID in productsID:
             product = Product.query.filter_by(id=productID).first()
             products.append(product)
+
 
         order.products = products
 

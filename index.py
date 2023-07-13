@@ -149,8 +149,13 @@ def route_get_category(product_category):
     
 @app.route('/orders/<userID>/<order_ID>', methods=['GET'])
 def route_get_order(userID, order_ID): 
-    if request.method == 'GET':        
-        order_query = Order.query.filter_by(userID=userID)
+    if request.method == 'GET':  
+        
+        if userID == 'admin':
+            order_query = Order.query
+        else:
+            order_query = Order.query.filter_by(userID=userID)
+
         if order_ID == 'last':
             order = order_query.order_by(Order.id.desc()).first()
         else:
